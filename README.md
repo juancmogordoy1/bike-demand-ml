@@ -2,6 +2,10 @@
 
 Bike Sharing – Washington D.C. (2011–2012)
 
+## 📷 Vista de la aplicación
+
+![Vista de la app](app_screenshot.png)
+
 Proyecto de Machine Learning para predecir la demanda diaria de bicicletas compartidas (cnt) utilizando variables de calendario y condiciones climáticas.
 Incluye:
 
@@ -168,6 +172,9 @@ Se seleccionó el mejor modelo según métricas objetivas
 Se exportó para producción
 Se implementó una app interactiva
 Se agregó contexto histórico para interpretación
+<<<<<<< HEAD
 
+=======
+>>>>>>> 24e0992 (Mejorar el README y agregar la descripción del proyecto)
 
 Autor: Juan Cruz Mogordoy
