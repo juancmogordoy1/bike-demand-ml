@@ -177,4 +177,5 @@ Se agregó contexto histórico para interpretación
 =======
 >>>>>>> 24e0992 (Mejorar el README y agregar la descripción del proyecto)
 
+
 Autor: Juan Cruz Mogordoy
