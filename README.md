@@ -1,18 +1,17 @@
 🚲 Predicción de Demanda de Bicicletas
-
 Bike Sharing – Washington D.C. (2011–2012)
 
-## 📷 Vista de la aplicación
-
+📷 Vista de la aplicación
 ![Vista de la app](app_screenshot.png)
 
 Proyecto de Machine Learning para predecir la demanda diaria de bicicletas compartidas (cnt) utilizando variables de calendario y condiciones climáticas.
-Incluye:
 
+Incluye:
 Comparación de múltiples modelos de regresión
 Pipeline con preprocesamiento integrado
 Prevención de data leakage
-Evaluación con train/test split
+Evaluación con train/test split y validación cruzada
+Optimización de hiperparámetros
 Modelo exportado listo para producción
 Aplicación interactiva desarrollada con Streamlit
 Interpretabilidad mediante importancia de variables y percentiles históricos
@@ -20,8 +19,21 @@ Interpretabilidad mediante importancia de variables y percentiles históricos
 📌 Objetivo del Proyecto
 
 Predecir el total de alquileres diarios (cnt) para un día dado en función de:
-Variables de calendario: estación, año, mes, día de semana, día laboral / feriado
-Condiciones climáticas: clima general, temperatura, sensación térmica, humedad y viento
+
+Variables de calendario:
+season
+yr
+mnth
+weekday
+holiday
+workingday
+
+Condiciones climáticas:
+weathersit
+temp
+atemp
+hum
+windspeed
 
 Aplicación práctica:
 Planificación operativa, redistribución de bicicletas y estimación de demanda esperada según condiciones previstas.
@@ -35,25 +47,27 @@ Fuente: https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset
 Archivo utilizado:
 data/raw/day.csv (agregado diario)
 
-Se eligió la versión diaria (day.csv) porque:
+Se eligió la versión diaria porque:
 Reduce ruido respecto al nivel horario
 Permite un modelo más interpretable
 Facilita una defensa clara del enfoque
 
 🧹 Selección de Variables y Prevención de Data Leakage
-
 Variable objetivo:
+
 y = cnt (total de alquileres por día)
 
 Variables utilizadas (features):
-Calendario
+
+Calendario:
 season
 yr
 mnth
 weekday
 holiday
 workingday
-Clima
+
+Clima:
 weathersit
 temp
 atemp
@@ -70,7 +84,7 @@ Esta decisión garantiza que el modelo solo utilice información disponible ante
 
 Se implementó un ColumnTransformer para:
 Aplicar OneHotEncoder a variables categóricas
-Dejar variables numéricas como passthrough
+Mantener variables numéricas como passthrough
 Todo el preprocesamiento forma parte del mismo Pipeline que el modelo, asegurando consistencia entre entrenamiento e inferencia en producción.
 
 🧠 Modelado y Comparación de Modelos
@@ -85,28 +99,67 @@ KNN (k=25)	Basado en distancia	713.31	0.804
 
 Split utilizado: 80% entrenamiento / 20% test.
 
-El modelo seleccionado fue:
-
+El modelo base seleccionado fue:
 GradientBoostingRegressor (configuración default)
 Motivo: mejor desempeño en MAE y R², capturando relaciones no lineales entre clima y demanda.
 
-🏋️ Entrenamiento Final
+🔧 Optimización de Hiperparámetros
 
-Proceso:
-Split 80/20 para evaluación
-Selección del mejor modelo
-Reentrenamiento con el 100% del dataset
-Exportación del pipeline completo
+Posteriormente se realizó un proceso de optimización utilizando:
+Validación cruzada 5-Fold
+Métrica principal: MAE
 
-Archivo exportado:
+1️⃣ RandomizedSearchCV – RandomForestRegressor
+
+Se utilizó RandomizedSearch debido a la gran cantidad de hiperparámetros relevantes en RandomForest.
+25 combinaciones evaluadas
+Exploración aleatoria dentro de rangos definidos
+CV 5-Fold
+
+Mejor resultado (CV):
+MAE ≈ 509.59
+
+2️⃣ GridSearchCV – GradientBoostingRegressor
+
+Se utilizó GridSearch con un grid controlado sobre:
+n_estimators
+learning_rate
+max_depth
+subsample
+min_samples_split
+min_samples_leaf
+
+Total evaluado:
+486 combinaciones × 5 folds = 2430 entrenamientos
+
+Mejor resultado (CV):
+MAE ≈ 465.04
+
+Mejores hiperparámetros:
+learning_rate = 0.03
+max_depth = 4
+min_samples_split = 10
+min_samples_leaf = 1
+n_estimators = 350
+subsample = 0.8
+
+🏆 Modelo Final Seleccionado
+
+El modelo final fue:
+GradientBoostingRegressor optimizado con GridSearchCV
+
+Evaluación en conjunto de test:
+MAE: 414.21
+R²: 0.907
+Esto representa una mejora respecto al modelo baseline, confirmando el impacto positivo del proceso de tuning.
+El modelo fue reentrenado con el 100% del dataset y exportado como:
 models/gradient_boosting.pkl
-Esto permite utilizar el modelo sin necesidad de reentrenar en cada ejecución.
 
 📊 Interpretabilidad
 
-Se generaron dos mecanismos de interpretación:
-
+Se implementaron dos mecanismos de interpretación:
 1️⃣ Importancia de Variables
+
 Exportada en:
 reports/feature_importance.csv
 Permite identificar qué factores influyen más en la demanda.
@@ -116,13 +169,14 @@ Se calcularon:
 Media histórica
 Percentiles P25, P50, P75
 
-La predicción se clasifica como:
+Clasificación de la predicción:
 Baja demanda → menor a P25
 Demanda normal → entre P25 y P75
 Alta demanda → mayor a P75
 Esto transforma una predicción numérica en una interpretación operativa.
 
 🖥️ Aplicación Web (Streamlit)
+
 La aplicación permite:
 Ingresar condiciones del día (clima + calendario)
 Obtener predicción de demanda (cnt)
@@ -130,7 +184,7 @@ Mostrar rango orientativo ±12%
 Comparar contra percentiles históricos
 
 Arquitectura:
-La app NO entrena el modelo
+La app no entrena el modelo
 Solo carga el pipeline exportado (gradient_boosting.pkl)
 Garantiza consistencia con el entrenamiento
 
@@ -139,11 +193,11 @@ python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# Entrenamiento opcional
-python -m src.train
+# Entrenamiento con tuning
+python .\src\tune_search.py
 
 # Ejecutar app
-streamlit run src/app.py
+streamlit run .\app.py
 📁 Estructura del Proyecto
 bike-demand-ml/
 ├── data/raw/day.csv
@@ -160,22 +214,20 @@ bike-demand-ml/
 ├── src/
 │   ├── train_compare.py
 │   ├── train.py
-│   └── app.py
+│   └── tune_search.py
+├── app.py
 ├── requirements.txt
 └── README.md
 🎯 Resultado Final
 
 Con datos históricos de bicicletas y variables climáticas:
+
 Se entrenó un modelo de ML sin fuga de información
-Se evaluó correctamente con train/test split
+Se evaluó correctamente con train/test split y validación cruzada
+Se optimizaron hiperparámetros con GridSearch y RandomizedSearch
 Se seleccionó el mejor modelo según métricas objetivas
 Se exportó para producción
 Se implementó una app interactiva
 Se agregó contexto histórico para interpretación
-<<<<<<< HEAD
-
-=======
->>>>>>> 24e0992 (Mejorar el README y agregar la descripción del proyecto)
-
 
 Autor: Juan Cruz Mogordoy
