@@ -1,6 +1,6 @@
 🚲 Predicción de Demanda de Bicicletas
 Bike Sharing – Washington D.C. (2011–2012)
-
+https://bike-demand-ml-9kntz6fakehzenxhdznqgb.streamlit.app/
 📷 Vista de la aplicación
 ![Vista de la app](app_screenshot.png)
 
@@ -198,6 +198,7 @@ python .\src\tune_search.py
 
 # Ejecutar app
 streamlit run .\app.py
+
 📁 Estructura del Proyecto
 bike-demand-ml/
 ├── data/raw/day.csv
